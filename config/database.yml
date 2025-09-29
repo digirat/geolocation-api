@@ -1,0 +1,30 @@
+production:
+  adapter: postgresql
+  encoding: utf8
+  reconnect: false
+  database: geolocation_prod
+  pool: 20
+  username: <%= ENV['POSTGRESQL_USERNAME']%>
+  password: <%= ENV['POSTGRESQL_PASSWORD']%>
+  host: <%= ENV['POSTGRESQL_ADDRESS']%>
+  port: 5432
+
+development:
+  database: geolocation_dev
+  username: <%= ENV['POSTGRESQL_USERNAME']%>
+  password: <%= ENV['POSTGRESQL_PASSWORD']%>
+  adapter: postgresql
+  encoding: utf8
+  port: 5432
+  pool: 20
+  host: localhost
+
+test:
+  database: geolocation_test
+  username: <%= ENV['POSTGRESQL_USERNAME']%>
+  password: <%= ENV['POSTGRESQL_PASSWORD']%>
+  adapter: postgresql
+  encoding: utf8
+  port: 5432
+  pool: 300
+  host: localhost
