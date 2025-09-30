@@ -1,11 +1,31 @@
 require "ipaddr"
 require "resolv"
+require "faraday/retry"
 
 module GeoProviders
   class Ipstack < Base
     def initialize(api_key: ENV["IPSTACK_API_KEY"], base_url: ENV.fetch("IPSTACK_BASE_URL", "http://api.ipstack.com"))
       @api_key = api_key
-      @client = Faraday.new(base_url) { |f| f.request :url_encoded; f.response :raise_error; f.adapter Faraday.default_adapter }
+      @client = Faraday.new(base_url) do |f|
+      f.request :url_encoded
+
+      # Retry on transient errors
+      f.request :retry,
+        max: 2,
+        interval: 0.2,
+        backoff_factor: 2,
+        retry_statuses: [429, 500, 502, 503, 504]
+
+      # Raise exceptions for 4xx/5xx
+      f.response :raise_error
+
+      # Set timeouts
+      f.options.timeout = 5         # seconds for whole request
+      f.options.open_timeout = 2    # seconds for TCP connect
+
+      f.adapter Faraday.default_adapter
+    end
+
     end
 
     def fetch(query)

@@ -53,6 +53,7 @@ gem "webmock", "~> 3.25", group: :test
 gem "dotenv-rails", "~> 3.1"
 
 gem "faraday", "~> 2.14"
+gem "faraday-retry"
 
 gem "jsonapi-serializer", "~> 2.2"
 
