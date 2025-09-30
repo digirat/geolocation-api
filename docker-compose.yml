@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRESQL_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRESQL_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  web:
+    build: .
+    env_file:
+      - .env.docker
+    environment:
+      RAILS_ENV: development
+      RACK_ENV: development
+    ports:
+      - "3000:3000"
+    depends_on: [db]
+    volumes:
+      - .:/app:cached
+      - bundle:/usr/local/bundle
+
+volumes:
+  pgdata:
+  bundle:

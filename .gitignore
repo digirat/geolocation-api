@@ -7,8 +7,10 @@
 # Ignore bundler config.
 /.bundle
 
-# Ignore all environment files.
-/.env*
+# Ignore environment files
+.envrc
+.env.docker
+
 
 # Ignore all logfiles and tempfiles.
 /log/*
@@ -30,5 +32,3 @@
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
-.envrc
-.env.docker
