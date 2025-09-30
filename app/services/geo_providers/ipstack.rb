@@ -1,5 +1,8 @@
+# frozen_string_literal: true
 require "ipaddr"
 require "resolv"
+require "oj"
+require "faraday"
 require "faraday/retry"
 
 module GeoProviders
@@ -7,34 +10,28 @@ module GeoProviders
     def initialize(api_key: ENV["IPSTACK_API_KEY"], base_url: ENV.fetch("IPSTACK_BASE_URL", "http://api.ipstack.com"))
       @api_key = api_key
       @client = Faraday.new(base_url) do |f|
-      f.request :url_encoded
-
-      # Retry on transient errors
-      f.request :retry,
-        max: 2,
-        interval: 0.2,
-        backoff_factor: 2,
-        retry_statuses: [429, 500, 502, 503, 504]
-
-      # Raise exceptions for 4xx/5xx
-      f.response :raise_error
-
-      # Set timeouts
-      f.options.timeout = 5         # seconds for whole request
-      f.options.open_timeout = 2    # seconds for TCP connect
-
-      f.adapter Faraday.default_adapter
+        f.request :url_encoded
+        f.request :retry,
+                  max: 2,
+                  interval: 0.2,
+                  backoff_factor: 2,
+                  retry_statuses: [429, 500, 502, 503, 504]
+        f.response :raise_error
+        f.options.timeout = 5
+        f.options.open_timeout = 2
+        f.adapter Faraday.default_adapter
+      end
     end
 
-    end
+    # Accepts either an IP string or a hostname (already normalized by the caller).
+    def fetch(host_or_ip)
+      ip = ip?(host_or_ip) ? host_or_ip : resolve!(host_or_ip)
 
-    def fetch(query)
-      ip = ip_from(query)
       resp = @client.get("/#{ip}", access_key: @api_key)
       body = Oj.load(resp.body)
 
       if body.is_a?(Hash) && body["success"] == false
-        raise StandardError, body.dig("error", "info") || "ipstack error"
+        raise StandardError, (body.dig("error", "info") || "ipstack error")
       end
 
       {
@@ -48,22 +45,24 @@ module GeoProviders
         provider: "ipstack",
         status: "ok"
       }
+    rescue Resolv::ResolvError
+      raise ArgumentError, "could not resolve host"
     rescue Faraday::Error => e
       raise StandardError, "ipstack http error: #{e.message}"
     end
 
     private
 
-    def ip_from(query)
-      return query if ip?(query)
-      host = URI.parse(query).host rescue query
-      Resolv.getaddress(host)
-    end
-
     def ip?(str)
-      IPAddr.new(str) && true
+      IPAddr.new(str)
+      true
     rescue IPAddr::InvalidAddressError
       false
+    end
+
+    def resolve!(host)
+      # Will raise Resolv::ResolvError if it cannot resolve
+      Resolv.getaddress(host)
     end
   end
 end
