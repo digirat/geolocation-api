@@ -61,4 +61,4 @@ gem "oj", "~> 3.16"
 
 gem "rack-cors", "~> 3.0"
 
-gem "rack-attack", "~> 6.7"
+gem "rack-attack", "~> 6.8"
